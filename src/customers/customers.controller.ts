@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put, Query, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put, Query, NotFoundException, BadRequestException, Res } from '@nestjs/common';
 import { Customer } from './interface/customer/customer.interface';
 import { CustomersService } from './customers.service'; 
+import { CustomersDto } from './dto/customers.dto/customers.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -27,7 +28,7 @@ export class CustomersController {
 
   // Obtener un cliente por ID
   @Get(':id')
-  find(@Param('id') id: number) {
+  async find(@Param('id' ,new ParseIntPipe) id: number) {
     const customer = this.customerService.getId(id);
     if (!customer) {
       throw new NotFoundException(`No se encontró el cliente con ID ${id}`);
@@ -37,12 +38,11 @@ export class CustomersController {
 
   // Crear un cliente
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  createCustomer(@Body() body) {
-    if (!body.name || !body.age) {
-      throw new BadRequestException('Faltan los campos requeridos: name o age');
-    }
-    return this.customerService.insert(body);
+  @HttpCode(HttpStatus.OK)
+  createCustomers(
+    @Body() custumerDto: CustomersDto,
+  ) {
+    this.customerService.insert(custumerDto);
   }
 
   // Eliminar un cliente por ID
@@ -59,11 +59,24 @@ export class CustomersController {
 
   // Actualizar un cliente por ID
   @Put(':id')
-  update(@Param('id') id: number, @Body() body) {
+  async update(@Param('id' , new ParseIntPipe) id: number, @Body() body) {
     const customer = this.customerService.getId(id);
     if (!customer) {
       throw new NotFoundException(`No se encontró el cliente con ID ${id}`);
     }
     return this.customerService.update(id, body);
   }
+   // Ruta con decorador @Res para control de estado
+    @Get('detalle/:id')
+    findWithResponse(@Res() response, @Param('id') id: number) {
+      if (id < 100) {
+        return response
+          .status(HttpStatus.OK)
+          .send(`Página del producto: ${id}`);
+      } else {
+        return response
+          .status(HttpStatus.NOT_FOUND)
+          .send(`Producto inexistente`);
+      }
+    }
 }

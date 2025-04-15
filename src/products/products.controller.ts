@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query, Res} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseIntPipe, Patch, Post, Put, Query, Res} from '@nestjs/common';
 import { ProductsService } from '../products/products.service';
 import { Product } from './interfaces/product/product.interface';
 import { Response } from 'express';
@@ -14,8 +14,8 @@ export class ProductsController {
   }
 
   // Obtener un producto por ID
-  @Get(':id')
-  find(@Param('id') id: number) {
+ @Get(':id')
+  find(@Param('id' , ParseIntPipe) id: number) {
     return this.productsService.getId(id);
   }
 
@@ -43,14 +43,15 @@ rutaQuery(@Query() query) {
   @Get('ruta-error-404')
   @HttpCode(HttpStatus.OK)
   rutaConError404() {
-    return 'Esto es un error 404!! no existe';
+    throw new NotFoundException('Esto es un error 404!! no existe');
   }
-
   // Ruta con decorador @Res para control de estado
-  @Get('respuesta/:id')
-  findWithResponse(@Res() response: Response, @Param('id') id: number) {
+  @Get('detalle/:id')
+  findWithResponse(@Res() response, @Param('id' , ParseIntPipe) id: number) {
     if (id < 100) {
-      return response.status(HttpStatus.OK).send(`Página del producto: ${id}`);
+      return response
+        .status(HttpStatus.OK)
+        .send(`Página del producto: ${id}`);
     } else {
       return response
         .status(HttpStatus.NOT_FOUND)
